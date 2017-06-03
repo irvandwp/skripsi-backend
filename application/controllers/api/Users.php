@@ -36,7 +36,6 @@ class Users extends \Restserver\Libraries\REST_Controller {
 
         $where = array(
             'email' => $email,
-            'password' => $password,
             'role' => $role
         );
 
@@ -44,7 +43,7 @@ class Users extends \Restserver\Libraries\REST_Controller {
 
         $result = $query->result();
 
-        if (count($result) == 1) {
+        if (count($result) == 1 && password_verify($password, $result[0]->password)) {
             $message = array(
                 "token" => $result[0]->token
             );
@@ -62,7 +61,7 @@ class Users extends \Restserver\Libraries\REST_Controller {
         $request = json_decode(file_get_contents('php://input'));
         $email = $request->email;
         $name = $request->name;
-        $password = $request->password;
+        $password = password_hash($request->password, PASSWORD_BCRYPT);
         $phone = $request->phone;
         $address = $request->address;
         $role = $request->role;
@@ -82,6 +81,11 @@ class Users extends \Restserver\Libraries\REST_Controller {
         $this->db->trans_begin();
         $this->db->insert('users', $data);
         $this->db->trans_commit();
+
+        $message = array(
+            "code" => "SUCCESSFULL",
+            "message" => "Successfully create a new account!"
+        );
 
         $this->response(NULL, 201);
     }
