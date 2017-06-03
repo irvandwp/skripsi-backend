@@ -35,17 +35,73 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 
     public function new_post() {
         $request = json_decode(file_get_contents('php://input'));
-        $name = $request->name;
 
-        $data = array(
-            'name' => $name
-        );
+        $token = $request->token;
+        $where = array('token' => $token);
+        $result = $this->db->get_where('users', $where)->result();
 
-        $this->db->trans_begin();
-        $this->db->insert('courses', $data);
-        $this->db->trans_commit();
+        if (count($result) == 1 && $result[0]->token == $token) {
 
-        $this->response(NULL, 201);
+	        /**
+	         * yang dikirim :
+	         * course_id, description
+	         * duration, price, latitude, longitude, mentee_id
+	         */
+
+	        $course_id = $request->course_id;
+	        $description = $request->description;
+	        $duration = $request->duration;
+	        $price = $request->price;
+	        $latitude = $request->latitude;
+	        $longitude = $request->longitude;
+	        $mentee_id = $request->mentee_id;
+
+			$this->db->trans_begin();
+
+	        $data = array(
+	            'order_no' => strtoupper(substr($this->security->get_csrf_hash(), rand(0, 15), 5)),
+	            'total_price' => $price * $duration,
+	            'course_id' => $course_id,
+	            'description' => $description
+	        );	        
+	        $this->db->insert('orders', $data);
+
+	        $this->db->select('*');
+	        $this->db->from('orders');
+	        $this->db->order_by('created_at', 'desc');
+	        $this->db->limit(1);
+	        $last_order = $this->db->get()->result()[0];
+
+	        $data = array(
+	        	'order_id' => $last_order->id,
+	        	'duration' => $duration,
+	        	'price' => $price,
+	        	'latitude' => $latitude,
+	        	'longitude' => $longitude,
+	        	'mentee_id' => $mentee_id
+	        );
+	        $this->db->insert('order_details', $data);
+
+	        $data = array(
+	        	'order_no' => $last_order->order_no
+	        );
+	        $this->db->insert('reviews', $data);
+
+	        $this->db->trans_commit();
+
+	        $message = array(
+	            "code" => "SUCCESSFULL",
+	            "message" => "Successfully place a new order!"
+	        );
+	        $this->response($message, 200);
+
+        } else {
+            $message = array(
+			    "code" => "FORBIDDEN",
+			    "message" => "Go, away!"
+            );
+            $this->response($message, 403);
+        }
     }
 
 }
