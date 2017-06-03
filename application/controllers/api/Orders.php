@@ -29,7 +29,7 @@ class Orders extends \Restserver\Libraries\REST_Controller {
     public function detail_get()
     {
     	$id = $this->get('id');
-
+    	
     	$this->response($id, 200);
     }
 
