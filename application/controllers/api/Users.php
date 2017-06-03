@@ -45,9 +45,16 @@ class Users extends \Restserver\Libraries\REST_Controller {
         $result = $query->result();
 
         if (count($result) == 1) {
-            $this->response("DATA ACCEPTED", 200);
+            $message = array(
+                "token" => $result[0]->token
+            );
+            $this->response($message, 200);
         } else {
-            $this->response("DATA NOT ACCEPTED", 401);
+            $message = array(
+                "code" => "UNAUTHORIZED",
+                "message" => "Please enter the correct credentials!"
+            );
+            $this->response($message, 401);
         }
     }
 
@@ -69,6 +76,7 @@ class Users extends \Restserver\Libraries\REST_Controller {
             'address' => $address,
             'role' => $role,
             'occupation' => $occupation,
+            'token' => $this->security->get_csrf_hash(),
         );
 
         $this->db->trans_begin();
