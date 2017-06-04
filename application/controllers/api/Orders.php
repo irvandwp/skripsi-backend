@@ -17,20 +17,56 @@ class Orders extends \Restserver\Libraries\REST_Controller {
         date_default_timezone_set('Asia/Jakarta');
     }
 
-    public function index_get()
+    public function index_post()
     {
-        $this->db->trans_begin();
-        $query = $this->db->get('orders');
-        $this->db->trans_commit();
+        $request = json_decode(file_get_contents('php://input'));
 
-        $this->response($query->result(), 200);
+        $token = $request->token;
+        $where = array('token' => $token);
+        $result = $this->db->get_where('users', $where)->result();
+
+        if (count($result) == 1 && $result[0]->token == $token) {
+            $where = array();
+            $params = $result[0]->role == 'mentee' ? 'mentee_id' : 'mentor_id';
+            $where[$params] = $result[0]->id;
+            $order_result = $this->db->get_where('orders', $where)->result();
+            if (count($order_result) > 0) {
+                $this->response($order_result, 200);
+            } else {
+                $message = array(
+                    "code" => "NOT_FOUND",
+                    "message" => "No data found"
+                );
+                $this->response($message, 404);
+            }
+        } else {
+            $message = array(
+			    "code" => "FORBIDDEN",
+			    "message" => "Go, away!"
+            );
+            $this->response($message, 403);
+        }
     }
 
-    public function detail_get()
+    public function detail_post()
     {
-    	$id = $this->get('id');
-    	
-    	$this->response($id, 200);
+        $request = json_decode(file_get_contents('php://input'));
+
+        $token = $request->token;
+        $where = array('token' => $token);
+        $result = $this->db->get_where('users', $where)->result();
+
+        if (count($result) == 1 && $result[0]->token == $token) {
+	    	$id = $this->get('id');
+	    	
+	    	$this->response($id, 200);
+        } else {
+            $message = array(
+			    "code" => "FORBIDDEN",
+			    "message" => "Go, away!"
+            );
+            $this->response($message, 403);
+        }
     }
 
     public function new_post() {
@@ -45,7 +81,7 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	        /**
 	         * yang dikirim :
 	         * course_id, description
-	         * duration, price, latitude, longitude, mentee_id
+	         * duration, price, latitude, longitude
 	         */
 
 	        $course_id = $request->course_id;
@@ -54,7 +90,6 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	        $price = $request->price;
 	        $latitude = $request->latitude;
 	        $longitude = $request->longitude;
-	        $mentee_id = $request->mentee_id;
 
 			$this->db->trans_begin();
 
@@ -62,7 +97,8 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	            'order_no' => strtoupper(substr($this->security->get_csrf_hash(), rand(0, 15), 5)),
 	            'total_price' => $price * $duration,
 	            'course_id' => $course_id,
-	            'description' => $description
+	            'description' => $description,
+                'mentee_id' => $result[0]->id,
 	        );	        
 	        $this->db->insert('orders', $data);
 
@@ -78,7 +114,6 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	        	'price' => $price,
 	        	'latitude' => $latitude,
 	        	'longitude' => $longitude,
-	        	'mentee_id' => $mentee_id
 	        );
 	        $this->db->insert('order_details', $data);
 
