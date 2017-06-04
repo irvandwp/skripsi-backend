@@ -462,6 +462,7 @@ $config['csrf_exclude_uris'] = array(
     'api/orders/update/[0-9]+',
     'api/chats',
     'api/chats/new',
+    'api/reviews/new'
 );
 
 /*

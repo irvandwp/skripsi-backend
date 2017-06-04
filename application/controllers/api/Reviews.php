@@ -17,16 +17,45 @@ class Reviews extends \Restserver\Libraries\REST_Controller {
         date_default_timezone_set('Asia/Jakarta');
     }
 
-    public function index_get()
+    public function new_post()
     {
-        $id = $this->get('id');
-        $this->response($id, 200);
-    }
+        $request = json_decode(file_get_contents('php://input'));
 
-    public function index_post()
-    {
-    	$id = $this->get('id');
-        $this->response($id, 200);
+        $this->db->trans_begin();
+        $token = $request->token;
+        $where = array('token' => $token);
+        $result = $this->db->get_where('users', $where)->result();
+        $this->db->trans_commit();
+
+        if (count($result) == 1 && $result[0]->token == $token && $result[0]->role == 'mentee') {
+
+            $order_no = $request->order_no;
+            $rating = $request->rating;
+            $description = $request->description;
+
+            $data = array(
+                'rating' => $rating,
+                'review_description' => $description,
+                'reviewed_by' => $result[0]->id, 
+            );
+            $this->db->trans_begin();
+            $this->db->where('order_no', $order_no);
+            $this->db->update('reviews', $data);
+            $this->db->trans_commit();
+
+            $message = array(
+                "code" => "SUCCESSFULL",
+                "message" => "Successfully create a new review!"
+            );
+            $this->response($message, 201); 
+
+        } else {
+            $message = array(
+                "code" => "FORBIDDEN",
+                "message" => "Go, away!"
+            );
+            $this->response($message, 403);
+        }
     }
 
 }
