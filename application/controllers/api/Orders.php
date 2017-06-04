@@ -21,15 +21,20 @@ class Orders extends \Restserver\Libraries\REST_Controller {
     {
         $request = json_decode(file_get_contents('php://input'));
 
+        $this->db->trans_begin();
         $token = $request->token;
         $where = array('token' => $token);
         $result = $this->db->get_where('users', $where)->result();
+        $this->db->trans_commit();
 
         if (count($result) == 1 && $result[0]->token == $token) {
+            $this->db->trans_begin();
             $where = array();
             $params = $result[0]->role == 'mentee' ? 'mentee_id' : 'mentor_id';
             $where[$params] = $result[0]->id;
             $order_result = $this->db->get_where('orders', $where)->result();
+            $this->db->trans_commit();
+
             if (count($order_result) > 0) {
                 $this->response($order_result, 200);
             } else {
@@ -52,14 +57,25 @@ class Orders extends \Restserver\Libraries\REST_Controller {
     {
         $request = json_decode(file_get_contents('php://input'));
 
+        $this->db->trans_begin();
         $token = $request->token;
         $where = array('token' => $token);
         $result = $this->db->get_where('users', $where)->result();
+        $this->db->trans_commit();
 
         if (count($result) == 1 && $result[0]->token == $token) {
 	    	$id = $this->get('id');
 	    	
-	    	$this->response($id, 200);
+            $this->db->trans_begin();
+            $this->db->select('*');
+            $this->db->from('orders');
+            $this->db->join('order_details', 'orders.id = order_details.order_id', 'inner');
+            $this->db->join('reviews', 'orders.order_no = reviews.order_no', 'inner');
+            $this->db->limit(1);
+            $result = $this->db->get()->result()[0];
+            $this->db->trans_commit();
+
+	    	$this->response($result, 200);
         } else {
             $message = array(
 			    "code" => "FORBIDDEN",
@@ -72,9 +88,11 @@ class Orders extends \Restserver\Libraries\REST_Controller {
     public function new_post() {
         $request = json_decode(file_get_contents('php://input'));
 
+        $this->db->trans_begin();
         $token = $request->token;
         $where = array('token' => $token);
         $result = $this->db->get_where('users', $where)->result();
+        $this->db->trans_commit();
 
         if (count($result) == 1 && $result[0]->token == $token) {
 
@@ -134,6 +152,49 @@ class Orders extends \Restserver\Libraries\REST_Controller {
             $message = array(
 			    "code" => "FORBIDDEN",
 			    "message" => "Go, away!"
+            );
+            $this->response($message, 403);
+        }
+    }
+
+    public function update_post()
+    {
+        $request = json_decode(file_get_contents('php://input'));
+
+        $this->db->trans_begin();
+        $token = $request->token;
+        $where = array('token' => $token);
+        $result = $this->db->get_where('users', $where)->result();
+        $this->db->trans_commit();
+
+        if (count($result) == 1 && $result[0]->token == $token) {
+
+            /**
+             * yang dikirim
+             * status
+             */
+
+            $data = array();
+            $params = $result[0]->role == 'mentee' ? 'mentee_id' : 'mentor_id';
+            $data[$params] = $result[0]->id;
+            $data['status'] = strtoupper($request->status);
+
+            $id = $this->get('id');
+            
+            $this->db->trans_begin();
+            $this->db->where('id', $id);
+            $this->db->update('orders', $data);
+            $this->db->trans_commit();
+
+            $message = array(
+                "code" => "SUCCESSFULL",
+                "message" => "Successfully update current order!"
+            );
+            $this->response($message, 202);
+        } else {
+            $message = array(
+                "code" => "FORBIDDEN",
+                "message" => "Go, away!"
             );
             $this->response($message, 403);
         }
