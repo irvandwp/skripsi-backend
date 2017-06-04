@@ -67,13 +67,28 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	    	$id = $this->get('id');
 	    	
             $this->db->trans_begin();
-            $this->db->select('*');
+            $this->db->select('orders.id, orders.order_no, orders.order_description, orders.mentee_id, orders.mentor_id, orders.status, courses.name, orders.total_price, order_details.price, order_details.duration, order_details.latitude, order_details.longitude, order_details.start_time, order_details.end_time, reviews.rating, reviews.review_description, reviews.reviewed_by');
             $this->db->from('orders');
             $this->db->join('order_details', 'orders.id = order_details.order_id', 'inner');
             $this->db->join('reviews', 'orders.order_no = reviews.order_no', 'inner');
+            $this->db->join('courses', 'courses.id = orders.course_id', 'inner');
+            $this->db->where('orders.id', $id);
             $this->db->limit(1);
-            $result = $this->db->get()->result()[0];
+            $result = $this->db->get()->result_array()[0];
+
+            $users = $this->db->get('users')->result();
             $this->db->trans_commit();
+
+            foreach ($users as $user) {
+                if ((int)$result['mentor_id'] == (int)$user->id){
+                    $result['mentor_name'] = $user->name;
+                    unset($result['mentor_id']);
+                }
+                if ((int)$result['mentee_id'] == (int)$user->id){
+                    $result['mentee_name'] = $user->name;
+                    unset($result['mentee_id']);
+                }
+            }
 
 	    	$this->response($result, 200);
         } else {
