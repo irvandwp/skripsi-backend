@@ -159,7 +159,7 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 
 	        $message = array(
 	            "code" => "SUCCESSFULL",
-	            "message" => "Successfully place a new order!"
+	            "message" => "Successfully place a new order"
 	        );
 	        $this->response($message, 200);
 
@@ -203,7 +203,7 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 
             $message = array(
                 "code" => "SUCCESSFULL",
-                "message" => "Successfully update current order!"
+                "message" => "Successfully update current order"
             );
             $this->response($message, 202);
         } else {

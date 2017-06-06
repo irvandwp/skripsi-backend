@@ -51,7 +51,7 @@ class Users extends \Restserver\Libraries\REST_Controller {
         } else {
             $message = array(
                 "code" => "UNAUTHORIZED",
-                "message" => "Please enter the correct credentials!"
+                "message" => "Please enter the correct credentials"
             );
             $this->response($message, 401);
         }
@@ -84,7 +84,7 @@ class Users extends \Restserver\Libraries\REST_Controller {
 
         $message = array(
             "code" => "SUCCESSFULL",
-            "message" => "Successfully create a new account!"
+            "message" => "Successfully create a new account"
         );
 
         $this->response(NULL, 201);

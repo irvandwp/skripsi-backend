@@ -87,7 +87,7 @@ class Chats extends \Restserver\Libraries\REST_Controller {
 
         $message = array(
             "code" => "SUCCESSFULL",
-            "message" => "Successfully create a new chat!"
+            "message" => "Successfully create a new chat"
         );
         $this->response($message, 201);        
 
