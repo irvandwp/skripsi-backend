@@ -45,7 +45,9 @@ class Users extends \Restserver\Libraries\REST_Controller {
 
         if (count($result) == 1 && password_verify($password, $result[0]->password)) {
             $message = array(
-                "token" => $result[0]->token
+                "token" => $result[0]->token,
+                "email" => $result[0]->email,
+                "name" => $result[0]->name
             );
             $this->response($message, 200);
         } else {

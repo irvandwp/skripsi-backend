@@ -118,7 +118,7 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	         */
 
 	        $course_id = $request->course_id;
-	        $description = $request->description;
+	        $description = $request->order_description;
 	        $duration = $request->duration;
 	        $price = $request->price;
 	        $latitude = $request->latitude;
@@ -130,7 +130,7 @@ class Orders extends \Restserver\Libraries\REST_Controller {
 	            'order_no' => strtoupper(substr($this->security->get_csrf_hash(), rand(0, 15), 5)),
 	            'total_price' => $price * $duration,
 	            'course_id' => $course_id,
-	            'description' => $description,
+	            'order_description' => $description,
                 'mentee_id' => $result[0]->id,
 	        );	        
 	        $this->db->insert('orders', $data);
