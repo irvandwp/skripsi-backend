@@ -25,6 +25,8 @@ class Orders extends \Restserver\Libraries\REST_Controller {
         $token = $request->token;
         $where = array('token' => $token);
         $result = $this->db->get_where('users', $where)->result();
+
+        $courses = $this->db->get('courses')->result();
         $this->db->trans_commit();
 
         if (count($result) == 1 && $result[0]->token == $token) {
@@ -32,11 +34,20 @@ class Orders extends \Restserver\Libraries\REST_Controller {
             $where = array();
             $params = $result[0]->role == 'mentee' ? 'mentee_id' : 'mentor_id';
             $where[$params] = $result[0]->id;
-            $order_result = $this->db->get_where('orders', $where)->result();
+            $order_result = $this->db->get_where('orders', $where)->result_array();
             $this->db->trans_commit();
 
             if (count($order_result) > 0) {
-                $this->response($order_result, 200);
+                $response = array();
+                foreach ($order_result as $result) {
+                    foreach ($courses as $course) {
+                        if ((int)$result['course_id'] == (int)$course->id) {
+                            $result['course_name'] = $course->name;
+                            array_push($response, $result);
+                        }
+                    }
+                }
+                $this->response($response, 200);
             } else {
                 $message = array(
                     "code" => "NOT_FOUND",
