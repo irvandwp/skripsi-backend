@@ -26,6 +26,19 @@ class Users extends \Restserver\Libraries\REST_Controller {
         $this->response($query->result(), 200);
     }
 
+    public function detail_post()
+    {
+        $request = json_decode(file_get_contents('php://input'));
+
+        $this->db->trans_begin();
+        $token = $request->token;
+        $where = array('token' => $token);
+        $result = $this->db->get_where('users', $where)->result()[0];
+        $this->db->trans_commit();
+
+        $this->response($result, 200);
+    }
+
     public function login_post()
     {
         $request = json_decode(file_get_contents('php://input'));
